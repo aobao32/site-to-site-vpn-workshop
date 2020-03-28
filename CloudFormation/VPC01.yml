@@ -355,7 +355,7 @@ Resources:
             - |
               chmod +x /etc/rc.d/rc.local
             - |
-              yum install openswan -y
+              yum install htop openswan -y
             - |
               echo "alias vi=vim" >> /etc/bashrc
             - |
