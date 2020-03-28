@@ -335,25 +335,27 @@ Resources:
             - |
               echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
             - |
+              echo "net.ipv4.conf.all.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
               sysctl -p
             - |
-              yum install squid -y
+              echo "iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1387" >> /etc/rc.d/rc.local
             - |
-              mv /etc/squid/squid.conf /etc/squid/squid.conf-userdata
-            - |
-              wget -O /etc/squid/squid.conf https://s3.cn-northwest-1.amazonaws.com.cn/workspaces-workshop/squid.conf
-            - |
-              touch /etc/squid/blacklist.txt
-            - |
-              systemctl restart squid
-            - |
-              wget -O /etc/iptables.conf https://s3.cn-northwest-1.amazonaws.com.cn/workspaces-workshop/iptables.conf
-            - |
-              iptables-restore < /etc/iptables.conf
-            - |
-              echo "iptables-restore < /etc/iptables.conf" >> /etc/rc.local
+              iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1387
             - |
               chmod +x /etc/rc.d/rc.local
+            - |
+              yum install openswan -y
             - |
               echo "alias vi=vim" >> /etc/bashrc
             - |
@@ -422,7 +424,6 @@ Resources:
     Properties:
       InstanceId: !Ref VPC1VM1
       EIP: !Ref EIP2
-
   EIP3assignment:
     Type: AWS::EC2::EIPAssociation
     DependsOn: VPC1VM2
@@ -465,6 +466,6 @@ Outputs:
         - ''
         - - "http://"
           - !GetAtt 
-            - VPC1VM2
+            - VPC1VM3
             - PrivateIp
           - "/"
