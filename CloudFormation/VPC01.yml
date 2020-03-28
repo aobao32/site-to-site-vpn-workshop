@@ -247,6 +247,28 @@ Resources:
       Tags:
         - Key: Name
           Value: VPNGateway
+  VPC1SecurtiyGroup3:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC1Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: AppServer
+      VpcId: !Ref VPC1
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: AppServer
 
   VPC1VM1:
     Type: 'AWS::EC2::Instance'
@@ -338,6 +360,62 @@ Resources:
               yum update -y
             - |+
 
+  VPC1VM3:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC1SecurtiyGroup2
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMILinux
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - t2.small
+          - Arch
+      InstanceType: t2.small
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: AppServer
+      SubnetId: !Ref VPC1Subnet3
+      SourceDestCheck: true
+      SecurityGroupIds:
+        - !Ref VPC1SecurtiyGroup3
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #! /bin/bash
+            - |
+              amazon-linux-extras install -y php7.3
+            - | 
+              yum install httpd git -y
+            - |  
+              git clone https://github.com/awslabs/ecs-demo-php-simple-app
+            - |
+              mv /ecs-demo-php-simple-app/src/* /var/www/html
+            - |
+              rm -rf /ecs-demo-php-simple-app
+            - |
+              usermod -a -G apache ec2-user
+            - |
+              chown -R ec2-user:apache /var/www
+            - |
+              chmod 2775 /var/www
+            - |
+              find /var/www -type d -exec chmod 2775 {} \;
+            - |
+              find /var/www -type f -exec chmod 0664 {} \;
+            - |
+              echo "alias vi=vim" >> /etc/bashrc
+            - |
+              systemctl restart php-fpm
+            - |
+              systemctl restart httpd
+            - |
+              yum update -y
+            - |+
+
   EIP2assignment:
     Type: AWS::EC2::EIPAssociation
     DependsOn: VPC1VM1
@@ -381,3 +459,12 @@ Outputs:
     Privatesubnet2:
       Description: Green Zone in AZ2 for applications
       Value: 10.1.102.0/24
+    VPC1ApplicationServer:
+      Description: Application Server in VPC1 private subnet
+      Value: !Join 
+        - ''
+        - - "http://"
+          - !GetAtt 
+            - VPC1VM2
+            - PrivateIp
+          - "/"
