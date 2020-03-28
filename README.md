@@ -4,9 +4,6 @@
 
 本文是基于AWS中国区域使用EC2搭建Site-to-Site VPN的workshop环境。对应的Cloudformation可用于实验学习，也可以用于生产。
 
-- vpc1.yml
-- vpc2.yml
-
 # 一、使用方法
 
 使用方法如下：
@@ -72,10 +69,15 @@
 ### 6、后续实验过程
 
 （1）模版创建完毕后，VPN Gateway只能通过Windows跳板机登录，不允许从公网使用SSH登录。
+
 （2）对VPNGateway服务器完成openswan的配置，替换配置文件中的IP地址为实验中使用的真实EIP。
+
 （3）启动VPN服务，确认连接建立
+
 （4）从两个VPN网关互相ping
-（5）从Windows跳板机登录到位于内网的Application服务器，然后ping另一侧的Applicatin服务。如果ping通则表示内网通过VPN网关转发成功。
+
+（5）从Windows跳板机登录到位于内网的Application服务器，然后ping另一侧的
+Applicatin服务。如果ping通则表示内网通过VPN网关转发成功。
 
 至此实验结束。
 
