@@ -1,0 +1,383 @@
+Description:  This template for VPC1
+Parameters:
+  EC2KEY:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  JumpServerInstanceType:
+    Description: Choose Jump Server Instance Type
+    Type: String
+    Default: t3a.medium
+    AllowedValues:
+      - t2.small
+      - t3a.medium
+      - c5.large
+    ConstraintDescription: must be a valid EC2 instance type.
+  VPNGatewayInstanceType:
+    Description: Choose VPN Gateway Instance Type
+    Type: String
+    Default: c5.large
+    AllowedValues:
+      - t2.small
+      - t3a.medium
+      - c5.large
+    ConstraintDescription: must be a valid EC2 instance type.
+Mappings:
+  AWSInstanceType2Arch:
+    t2.small:
+      Arch: HVM64
+    t3a.medium:
+      Arch: HVM64
+    c5.large:
+      Arch: HVM64
+  AWSRegionArch2AMIWindows:
+    cn-northwest-1:
+      HVM64: ami-0d15c93533af12219
+    cn-north-1:
+      HVM64: ami-046fcc352cbeafbbc
+  AWSRegionArch2AMILinux:
+    cn-northwest-1:
+      HVM64: ami-00a47f95dff9b0ac0
+    cn-north-1:
+      HVM64: ami-0442b0a087508033e
+    ap-southeast-1:
+      HVM64: ami-05c64f7b4062b0a21
+    us-west-1:
+      HVM64: ami-03caa3f860895f82e
+    us-west-2:
+      HVM64: ami-04590e7389a6e577c
+    us-east-1:
+      HVM64: ami-062f7200baf2fa504
+    us-east-2:
+      HVM64: ami-02ccb28830b645a41
+    ap-south-1:
+      HVM64: ami-0217a85e28e625474
+    ap-northeast-1:
+      HVM64: ami-011facbea5ec0363b
+    ap-northeast-2:
+      HVM64: ami-0bea7fd38fabe821a
+    eu-central-1:
+      HVM64: ami-07cda0db070313c52
+    eu-west-1:
+      HVM64: ami-0713f98de93617bb4
+    eu-west-2:
+      HVM64: ami-0089b31e09ac3fffc
+Resources:
+  VPC1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC1
+  VPC1InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: VPC1
+  VPC1InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref VPC1InternetGateway
+      VpcId: !Ref VPC1
+  EIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: NAT
+  EIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: VPNGateway
+  EIP3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: JumpServer
+  VPC1Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.1.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public1
+  VPC1Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 10.1.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public2
+  VPC1Subnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.1.101.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Private1
+  VPC1Subnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 10.1.102.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Private2
+  VPC1RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC1
+      Tags:
+        - Key: Name
+          Value: Public
+  VPC1DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPC1InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref VPC1InternetGateway
+  VPC1Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable1
+      SubnetId: !Ref VPC1Subnet1
+  VPC1Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable1
+      SubnetId: !Ref VPC1Subnet2
+  NATGateway1:
+    DependsOn: VPC1Subnet1RouteTableAssociation
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP1.AllocationId
+      SubnetId: !Ref VPC1Subnet1
+      Tags:
+        - Key: Name
+          Value: NATforPrivate
+  VPC1RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC1
+      Tags:
+        - Key: Name
+          Value: Private
+  VPC1Subnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable2
+      SubnetId: !Ref VPC1Subnet3
+  VPC1Subnet4RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable2
+      SubnetId: !Ref VPC1Subnet4
+  VPC1PrivatetoPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPC1Subnet3RouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC1RouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway1
+  VPC1SecurtiyGroup1:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC1Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: JumpServer
+      VpcId: !Ref VPC1
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3389'
+          ToPort: '3389'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: JumpServer
+  VPC1SecurtiyGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC1Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: VPNGateway
+      VpcId: !Ref VPC1
+      SecurityGroupIngress:
+        - IpProtocol: udp
+          FromPort: '500'
+          ToPort: '500'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: '4500'
+          ToPort: '4500'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 10.1.0.0/16
+        - IpProtocol: 50
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: VPNGateway
+
+  VPC1VM1:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC1SecurtiyGroup1
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMIWindows
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - !Ref JumpServerInstanceType
+          - Arch
+      InstanceType: !Ref JumpServerInstanceType
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: JumpServer
+      SubnetId: !Ref VPC1Subnet1
+      SourceDestCheck: true
+      SecurityGroupIds:
+        - !Ref VPC1SecurtiyGroup1
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              <powershell>
+            - |
+              Import-Module NetSecurity
+            - |
+              Set-NetFirewallRule -DisplayName "File and Printer Sharing (Echo Request - ICMPv4-In)" -enabled True
+            - |
+              </powershell>
+            - |
+              <persist>true</persist>
+            - |+ 
+
+  VPC1VM2:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC1SecurtiyGroup2
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMILinux
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - !Ref VPNGatewayInstanceType
+          - Arch
+      InstanceType: !Ref VPNGatewayInstanceType
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: VPNGateway
+      SubnetId: !Ref VPC1Subnet1
+      SourceDestCheck: false
+      SecurityGroupIds:
+        - !Ref VPC1SecurtiyGroup2
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #! /bin/bash
+            - |
+              echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+            - |
+              sysctl -p
+            - |
+              yum install squid -y
+            - |
+              mv /etc/squid/squid.conf /etc/squid/squid.conf-userdata
+            - |
+              wget -O /etc/squid/squid.conf https://s3.cn-northwest-1.amazonaws.com.cn/workspaces-workshop/squid.conf
+            - |
+              touch /etc/squid/blacklist.txt
+            - |
+              systemctl restart squid
+            - |
+              wget -O /etc/iptables.conf https://s3.cn-northwest-1.amazonaws.com.cn/workspaces-workshop/iptables.conf
+            - |
+              iptables-restore < /etc/iptables.conf
+            - |
+              echo "iptables-restore < /etc/iptables.conf" >> /etc/rc.local
+            - |
+              chmod +x /etc/rc.d/rc.local
+            - |
+              echo "alias vi=vim" >> /etc/bashrc
+            - |
+              yum update -y
+            - |+
+
+  EIP2assignment:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: VPC1VM1
+    Properties:
+      InstanceId: !Ref VPC1VM1
+      EIP: !Ref EIP2
+
+  EIP3assignment:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: VPC1VM2
+    Properties:
+      InstanceId: !Ref VPC1VM2
+      EIP: !Ref EIP3
+
+Outputs:
+    JumpServer:
+      Description: Use Windows RDP to login
+      Value: !Ref EIP2
+    VPNGatewayEIP:
+      Description: VPN Gateway EIP for VPN Configuration
+      Value: !Ref EIP3
+    VPNGatewayPrivateIPLogin:
+      Description: VPN Gateway is only allowed to login from Windows Jump Server
+      Value: !Join 
+        - ''
+        - - "ssh -i "
+          - !Ref EC2KEY
+          - ".pem ec2-user@"
+          - !GetAtt 
+            - VPC1VM2
+            - PrivateIp
+    PublicSubnet1:
+      Description: DMZ in AZ1 for JumpServer/VPNGateway/Firewall and others
+      Value: 10.1.1.0/24
+    PublicSubnet2:
+      Description: DMZ in AZ2 for JumpServer/VPNGateway/Firewall and others
+      Value: 10.1.2.0/24
+    PrivateSubnet1:
+      Description: Green Zone in AZ1 for applications
+      Value: 10.1.101.0/24
+    Privatesubnet2:
+      Description: Green Zone in AZ2 for applications
+      Value: 10.1.102.0/24
