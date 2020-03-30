@@ -176,7 +176,7 @@ Resources:
       SubnetId: !Ref VPC1Subnet1
       Tags:
         - Key: Name
-          Value: NATforPrivate1
+          Value: VPC1NATforPrivate
   VPC1RouteTable2:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -205,7 +205,7 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     DependsOn: VPC1Subnet2RouteTableAssociation
     Properties:
-      GroupDescription: JumpServer1
+      GroupDescription: VPC1JumpServer
       VpcId: !Ref VPC1
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -223,7 +223,7 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     DependsOn: VPC1Subnet2RouteTableAssociation
     Properties:
-      GroupDescription: VPNGateway1
+      GroupDescription: VPC1VPNGateway
       VpcId: !Ref VPC1
       SecurityGroupIngress:
         - IpProtocol: udp
@@ -251,7 +251,7 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     DependsOn: VPC1Subnet2RouteTableAssociation
     Properties:
-      GroupDescription: AppServer
+      GroupDescription: VPC1AppServer
       VpcId: !Ref VPC1
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -359,7 +359,7 @@ Resources:
             - |
               wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn1.conf
             - |
-              wget -O /etc/ipsec.d/cisco.secrets https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/sec1.conf
+              wget -O /etc/ipsec.d/cisco.secrets https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/sec1.conf
             - |
               echo "alias vi=vim" >> /etc/bashrc
             - |
