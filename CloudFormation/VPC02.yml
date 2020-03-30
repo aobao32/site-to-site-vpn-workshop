@@ -1,4 +1,4 @@
-Description:  This template for VPC1
+Description:  This template for VPC2
 Parameters:
   EC2KEY:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
@@ -63,150 +63,150 @@ Mappings:
     eu-west-2:
       HVM64: ami-0089b31e09ac3fffc
 Resources:
-  VPC1:
+  VPC2:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 10.1.0.0/16
+      CidrBlock: 192.168.0.0/16
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: VPC1
-  VPC1InternetGateway:
+          Value: VPC2
+  VPC2InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: VPC1
-  VPC1InternetGatewayAttachment:
+          Value: VPC2
+  VPC2InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      InternetGatewayId: !Ref VPC1InternetGateway
-      VpcId: !Ref VPC1
-  VPC1EIP1:
+      InternetGatewayId: !Ref VPC2InternetGateway
+      VpcId: !Ref VPC2
+  VPC2EIP1:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: VPC1NAT
-  VPC1EIP2:
+          Value: VPC2NAT
+  VPC2EIP2:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: VPC1VPNGateway
-  VPC1EIP3:
+          Value: VPC2VPNGateway
+  VPC2EIP3:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: VPC1JumpServer
-  VPC1Subnet1:
+          Value: VPC2JumpServer
+  VPC2Subnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      CidrBlock: 10.1.1.0/24
+      CidrBlock: 192.168.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: VPC1Public1
-  VPC1Subnet2:
+          Value: VPC2Public1
+  VPC2Subnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       AvailabilityZone: !Select [ 1, !GetAZs  '' ]
-      CidrBlock: 10.1.2.0/24
+      CidrBlock: 192.168.2.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: VPC1Public2
-  VPC1Subnet3:
+          Value: VPC2Public2
+  VPC2Subnet3:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      CidrBlock: 10.1.101.0/24
+      CidrBlock: 192.168.101.0/24
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: VPC1Private1
-  VPC1Subnet4:
+          Value: VPC2Private1
+  VPC2Subnet4:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       AvailabilityZone: !Select [ 1, !GetAZs  '' ]
-      CidrBlock: 10.1.102.0/24
+      CidrBlock: 192.168.102.0/24
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: VPC1Private2
-  VPC1RouteTable1:
+          Value: VPC2Private2
+  VPC2RouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       Tags:
         - Key: Name
-          Value: VPC1Public
-  VPC1DefaultPublicRoute:
+          Value: VPC2Public
+  VPC2DefaultPublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: VPC1InternetGatewayAttachment
+    DependsOn: VPC2InternetGatewayAttachment
     Properties:
-      RouteTableId: !Ref VPC1RouteTable1
+      RouteTableId: !Ref VPC2RouteTable1
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref VPC1InternetGateway
-  VPC1Subnet1RouteTableAssociation:
+      GatewayId: !Ref VPC2InternetGateway
+  VPC2Subnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref VPC1RouteTable1
-      SubnetId: !Ref VPC1Subnet1
-  VPC1Subnet2RouteTableAssociation:
+      RouteTableId: !Ref VPC2RouteTable1
+      SubnetId: !Ref VPC2Subnet1
+  VPC2Subnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref VPC1RouteTable1
-      SubnetId: !Ref VPC1Subnet2
-  NATGateway1:
-    DependsOn: VPC1Subnet1RouteTableAssociation
+      RouteTableId: !Ref VPC2RouteTable1
+      SubnetId: !Ref VPC2Subnet2
+  NATGateway2:
+    DependsOn: VPC2Subnet1RouteTableAssociation
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt VPC1EIP1.AllocationId
-      SubnetId: !Ref VPC1Subnet1
+      AllocationId: !GetAtt VPC2EIP1.AllocationId
+      SubnetId: !Ref VPC2Subnet1
       Tags:
         - Key: Name
-          Value: NATforPrivate1
-  VPC1RouteTable2:
+          Value: NATforPrivate2
+  VPC2RouteTable2:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       Tags:
         - Key: Name
-          Value: VPC1Private
-  VPC1Subnet3RouteTableAssociation:
+          Value: VPC2Private
+  VPC2Subnet3RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref VPC1RouteTable2
-      SubnetId: !Ref VPC1Subnet3
-  VPC1Subnet4RouteTableAssociation:
+      RouteTableId: !Ref VPC2RouteTable2
+      SubnetId: !Ref VPC2Subnet3
+  VPC2Subnet4RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref VPC1RouteTable2
-      SubnetId: !Ref VPC1Subnet4
-  VPC1PrivatetoPublicRoute:
+      RouteTableId: !Ref VPC2RouteTable2
+      SubnetId: !Ref VPC2Subnet4
+  VPC2PrivatetoPublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: VPC1Subnet3RouteTableAssociation
+    DependsOn: VPC2Subnet3RouteTableAssociation
     Properties:
-      RouteTableId: !Ref VPC1RouteTable2
+      RouteTableId: !Ref VPC2RouteTable2
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGateway1
-  VPC1SecurtiyGroup1:
+      NatGatewayId: !Ref NATGateway2
+  VPC2SecurtiyGroup1:
     Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: VPC1Subnet2RouteTableAssociation
+    DependsOn: VPC2Subnet2RouteTableAssociation
     Properties:
-      GroupDescription: JumpServer1
-      VpcId: !Ref VPC1
+      GroupDescription: JumpServer2
+      VpcId: !Ref VPC2
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '3389'
@@ -218,13 +218,13 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: VPC1JumpServer
-  VPC1SecurtiyGroup2:
+          Value: VPC2JumpServer
+  VPC2SecurtiyGroup2:
     Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: VPC1Subnet2RouteTableAssociation
+    DependsOn: VPC2Subnet2RouteTableAssociation
     Properties:
-      GroupDescription: VPNGateway1
-      VpcId: !Ref VPC1
+      GroupDescription: VPNGateway2
+      VpcId: !Ref VPC2
       SecurityGroupIngress:
         - IpProtocol: udp
           FromPort: '500'
@@ -237,7 +237,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: '22'
           ToPort: '22'
-          CidrIp: 10.1.0.0/16
+          CidrIp: 192.168.0.0/16
         - IpProtocol: 50
           CidrIp: 0.0.0.0/0
         - IpProtocol: icmp
@@ -246,13 +246,13 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: VPC1VPNGateway
-  VPC1SecurtiyGroup3:
+          Value: VPC2VPNGateway
+  VPC2SecurtiyGroup3:
     Type: 'AWS::EC2::SecurityGroup'
-    DependsOn: VPC1Subnet2RouteTableAssociation
+    DependsOn: VPC2Subnet2RouteTableAssociation
     Properties:
       GroupDescription: AppServer
-      VpcId: !Ref VPC1
+      VpcId: !Ref VPC2
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: '22'
@@ -268,11 +268,11 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: VPC1AppServer
+          Value: VPC2AppServer
 
-  VPC1VM1:
+  VPC2VM1:
     Type: 'AWS::EC2::Instance'
-    DependsOn: VPC1SecurtiyGroup1
+    DependsOn: VPC2SecurtiyGroup1
     Properties:
       KeyName: !Ref EC2KEY
       ImageId: !FindInMap 
@@ -286,11 +286,11 @@ Resources:
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
-          Value: VPC1JumpServer
-      SubnetId: !Ref VPC1Subnet1
+          Value: VPC2JumpServer
+      SubnetId: !Ref VPC2Subnet1
       SourceDestCheck: true
       SecurityGroupIds:
-        - !Ref VPC1SecurtiyGroup1
+        - !Ref VPC2SecurtiyGroup1
       UserData: !Base64 
         'Fn::Join':
           - ''
@@ -306,9 +306,9 @@ Resources:
               <persist>true</persist>
             - |+ 
 
-  VPC1VM2:
+  VPC2VM2:
     Type: 'AWS::EC2::Instance'
-    DependsOn: VPC1SecurtiyGroup2
+    DependsOn: VPC2SecurtiyGroup2
     Properties:
       KeyName: !Ref EC2KEY
       ImageId: !FindInMap 
@@ -322,11 +322,11 @@ Resources:
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
-          Value: VPC1VPNGateway
-      SubnetId: !Ref VPC1Subnet1
+          Value: VPC2VPNGateway
+      SubnetId: !Ref VPC2Subnet1
       SourceDestCheck: false
       SecurityGroupIds:
-        - !Ref VPC1SecurtiyGroup2
+        - !Ref VPC2SecurtiyGroup2
       UserData: !Base64 
         'Fn::Join':
           - ''
@@ -366,9 +366,9 @@ Resources:
               yum update -y
             - |+
 
-  VPC1VM3:
+  VPC2VM3:
     Type: 'AWS::EC2::Instance'
-    DependsOn: VPC1SecurtiyGroup2
+    DependsOn: VPC2SecurtiyGroup2
     Properties:
       KeyName: !Ref EC2KEY
       ImageId: !FindInMap 
@@ -382,11 +382,11 @@ Resources:
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
-          Value: VPC1AppServer
-      SubnetId: !Ref VPC1Subnet3
+          Value: VPC2AppServer
+      SubnetId: !Ref VPC2Subnet3
       SourceDestCheck: true
       SecurityGroupIds:
-        - !Ref VPC1SecurtiyGroup3
+        - !Ref VPC2SecurtiyGroup3
       UserData: !Base64 
         'Fn::Join':
           - ''
@@ -440,29 +440,29 @@ Resources:
               systemctl restart httpd
             - |+
 
-  VPC1EIP2assignment:
+  VPC2EIP2assignment:
     Type: AWS::EC2::EIPAssociation
-    DependsOn: VPC1VM1
+    DependsOn: VPC2VM1
     Properties:
-      InstanceId: !Ref VPC1VM1
-      EIP: !Ref VPC1EIP2
-  VPC1EIP3assignment:
+      InstanceId: !Ref VPC2VM1
+      EIP: !Ref VPC2EIP2
+  VPC2EIP3assignment:
     Type: AWS::EC2::EIPAssociation
-    DependsOn: VPC1VM2
+    DependsOn: VPC2VM2
     Properties:
-      InstanceId: !Ref VPC1VM2
-      EIP: !Ref VPC1EIP3
+      InstanceId: !Ref VPC2VM2
+      EIP: !Ref VPC2EIP3
 
 Outputs:
     VPC:
       Description: VPCID
-      Value: VPC1
+      Value: VPC2
     JumpServer:
       Description: Use Windows RDP to login
-      Value: !Ref VPC1EIP2
+      Value: !Ref VPC2EIP2
     VPNGatewayEIP:
       Description: VPN Gateway EIP for VPN Configuration
-      Value: !Ref VPC1EIP3
+      Value: !Ref VPC2EIP3
     VPNGatewayPrivateIPLogin:
       Description: VPN Gateway is only allowed to login from Windows Jump Server
       Value: !Join 
@@ -471,36 +471,36 @@ Outputs:
           - !Ref EC2KEY
           - ".pem ec2-user@"
           - !GetAtt 
-            - VPC1VM2
+            - VPC2VM2
             - PrivateIp
     PublicSubnet1:
       Description: DMZ in AZ1 for JumpServer/VPNGateway/Firewall and others
-      Value: 10.1.1.0/24
+      Value: 192.168.1.0/24
     PublicSubnet2:
       Description: DMZ in AZ2 for JumpServer/VPNGateway/Firewall and others
-      Value: 10.1.2.0/24
+      Value: 192.168.2.0/24
     PrivateSubnet1:
       Description: Green Zone in AZ1 for applications
-      Value: 10.1.101.0/24
+      Value: 192.168.101.0/24
     Privatesubnet2:
       Description: Green Zone in AZ2 for applications
-      Value: 10.1.102.0/24
-    VPC1ApplicationServer:
-      Description: Application Server in VPC1 private subnet
+      Value: 192.168.102.0/24
+    VPC2ApplicationServer:
+      Description: Application Server in VPC2 private subnet
       Value: !Join 
         - ''
         - - "http://"
           - !GetAtt 
-            - VPC1VM3
+            - VPC2VM3
             - PrivateIp
           - "/"
-    VPC1ApplicationServerLogin:
-      Description: Application Server in VPC1 private subnet
+    VPC2ApplicationServerLogin:
+      Description: Application Server in VPC2 private subnet
       Value: !Join 
         - ''
         - - "ssh -i "
           - !Ref EC2KEY
           - ".pem ec2-user@"
           - !GetAtt 
-            - VPC1VM3
+            - VPC2VM3
             - PrivateIp
