@@ -357,7 +357,7 @@ Resources:
             - |
               yum install htop openswan -y
             - |
-              wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn1.conf
+              wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn2.conf
             - |
               wget -O /etc/ipsec.d/cisco.secrets https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/sec1.conf
             - |
