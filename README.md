@@ -2,8 +2,6 @@
 
 ![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/Site-to-Site-vpn.png)
 
-注：如果图片不能正常显示，请点击这里 https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/Site-to-Site-vpn.png 。
-
 本文是基于AWS中国区域使用EC2搭建Site-to-Site VPN的workshop环境。对应的Cloudformation可用于实验学习，也可以用于生产。
 
 # 一、使用方法
