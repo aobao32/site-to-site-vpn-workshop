@@ -1,6 +1,6 @@
 # Site-to-Site VPN Workshop - CloudFormation 模版
 
-![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/Site-to-Site-vpn.png)
+![Site-to-Site VPN](https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/Site-to-Site-vpn.png)
 
 本文是基于AWS中国区域使用EC2搭建Site-to-Site VPN的workshop环境。对应的Cloudformation可用于实验学习，也可以用于生产。
 
@@ -8,9 +8,9 @@
 
 使用方法如下：
 
-- 从本代码仓库的CloudFormation目录下template文件；
+- 从本代码仓库的CloudFormation目录下,获取2个CloudFormation template文件；
 - 分别在第一个Region和第二个Reion运行两个模版；
-- 查看CloudFormation输出；
+- 查看CloudFormation输出。
 
 # 二、使用CloudFormation模版创建环境
 
@@ -32,7 +32,7 @@
 然后进入Cloudformation中加载模版。输入模版名称，可以选择参数包括：
 
 - 跳板机规格（保持默认即可）；
-- VPN Gateway 网关所用EC2的规格；如果用于生产，可选c5.large，测试的话可选t2.small规格；
+- VPN Gateway 网关所用EC2的规格；如果用于生产，可选c5.large，测试的话可选t2.small规格。
 
 然后一路继续即可。
 
@@ -51,7 +51,7 @@
     - NAT网关；
     - Windows跳板机；
     - VPNGateway网关；
-- 三个EC2自动生成对应的安全规则组
+- 三个EC2自动生成对应的安全规则组。
 
 其中，VPN网关服务器会预先完成OS级别路由转发和iptable设置，并创建VPN连接的模版文件。下一步，需要替换配置文件中的IP地址为实验中使用的真实EIP。
 
@@ -62,7 +62,7 @@
 - 登录到Windows跳板机；
 - 从Windows跳板机使用Private IP登录VPN网关；
 - 从Windows跳板机使用Private IP登录位于Private Subnet内部子网的Application Server；
-- 从Windows跳板机使用浏览器，访问 http://应用服务器内网IP/ ，验证内网应用服务器工作正常；
+- 从Windows跳板机使用浏览器，访问 http://应用服务器内网IP/ ，验证内网应用服务器工作正常。
 
 验证成功后，继续下一步。
 
@@ -116,9 +116,9 @@ service ipsec start
 ipsec verify
 ```
 
-返回结果如下截图，则表示配置正确。
+返回结果如下截图，则表示配置正确。注意需要所有项目都显示OK，如果有黄色或者红色提示项，需要修改配置参数解决之。
 
-![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/ipsec-verify.png)
+![Site-to-Site VPN](https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/ipsec-verify.png)
 
 ### 3、从VPN网关发起对远端的VPN网关的Ping测试
 
@@ -137,7 +137,7 @@ VPC1的配置步骤如下：
 - 点击页面下半部分，第二个标签页Route Table路由表，点击Edit Route编辑路由按钮；
 - 现有路由条目不要修改，点击Add Route添加路由按钮增加一行新的路由
 - Destation目标填写为192.168.0.0/16，Targe目标从下拉框中选择Instance，然后从Instance带出来的EC2清单中选择VPC1VPNGateway；
-- 点击保存路由按钮；
+- 点击保存路由按钮。
 
 VPC2的配置步骤如下：
 
@@ -146,7 +146,8 @@ VPC2的配置步骤如下：
 - 点击页面下半部分，第二个标签页Route Table路由表，点击Edit Route编辑路由按钮；
 - 现有路由条目不要修改，点击Add Route添加路由按钮增加一行新的路由
 - Destation目标填写为192.168.0.0/16，Targe目标从下拉框中选择Instance，然后从Instance带出来的EC2清单中选择VPC1VPNGateway；
-- 点击保存路由按钮；
+- 点击保存路由按钮。
+
 路由表配置完成。
 
 ### 2、使用浏览器访问远端内网应用
@@ -154,7 +155,7 @@ VPC2的配置步骤如下：
 上述路由表配置完成后，执行如下操作：
 
 - 在VPC1的Windows跳板机，打开浏览器，访问VPC2的内网的应用服务器80端口;
-- 在VPC2的Windows跳板机，打开浏览器，访问VPC1的内网的应用服务器80端口;
+- 在VPC2的Windows跳板机，打开浏览器，访问VPC1的内网的应用服务器80端口。
 
 交叉访问正常，表示路由配置完全正确。
 
@@ -221,4 +222,4 @@ http://10.1.101.98/somkeping/
 参考文档（有大量配置参数修正）
 https://amazonaws-china.com/cn/blogs/china/openswan-vpn-solutions/
 
-请联系 pcman.biti-at-gmail.com
+作者 pcman.biti-at-gmail.com
