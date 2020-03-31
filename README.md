@@ -166,11 +166,53 @@ VPC2的配置步骤如下：
 
 ## 五、使用Smokeping监控流量
 
+为了监控网络延迟，在本实验环境中位于Private Subnet的Application Server上，部署了Smokeping网络测试工具。接下来我们将修改其配置，实现对远端的ping延迟监控。
+
 ### 1、修改Smokeping配置文件
+
+通过Windows跳板机，使用SSH工具，登录到位于Private Subnet的Application Server上，编辑 /etc/smokeping.conf 文件，在大约139行附近找到如下配置章节：
+
+```
+++ Amazon
+
+menu = Amazon.cn
+title = AWS Site-to-Site VPN
+host = z.cn
+
+```
+
+现在修改配置文件，将其中的网站和域名改为自己要测试的远端站点，其中的host IP地址可以填写为本VPC之外的另一侧的VPN Gateway。例如修改为如下：
+
+```
+++ MyCloud
+
+menu = ToMyIDC
+title = AWS Site-to-Site VPN
+host = 192.168.1.126
+
+```
+
+修改配置完成，保存退出编辑模式。
+
+执行如下命令重启smokeping服务。
+
+```
+service smokeping restart
+```
 
 ### 2、查看监控数据
 
-至此实验结束。
+在VPC的跳板机上打开浏览器，访问刚才修改配置的Application Server的地址，在URL地址栏上增加smokeping，即可查看页面结果。例如如下网址：
+
+```
+http://10.1.101.98/somkeping/
+```
+
+点击左侧菜单栏的Charts之下的VPC链接，点击后可以展开子菜单，可以看到其中的子菜单的名字就是上一个步骤中修改配置文件时候定义的名字。
+
+### 3、实验结束/环境删除
+
+至此本实验全部完成。请删除全部实验环境。
 
 ***
 
