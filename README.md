@@ -66,7 +66,7 @@
 
 验证成功后，继续下一步。
 
-## 三、配置IPSEC VPN
+# 三、配置IPSEC VPN
 
 ### 1、创建IPSEC VPN连接
 
@@ -126,7 +126,7 @@ ipsec verify
 
 至此两个路由器之间已经打通。
 
-## 四、打通路由器背后的子网
+# 四、打通路由器背后的子网
 
 ### 1、为本VPC添加去往远端VPC的路由条目
 
@@ -165,7 +165,7 @@ VPC2的配置步骤如下：
 
 如果ping成功得到响应，则表示配置完成。
 
-## 五、使用Smokeping监控流量
+# 五、使用Smokeping监控流量
 
 为了监控网络延迟，在本实验环境中位于Private Subnet的Application Server上，部署了Smokeping网络测试工具。接下来我们将修改其配置，实现对远端的ping延迟监控。
 
