@@ -244,6 +244,8 @@ Resources:
           FromPort: '8'
           ToPort: '-1'
           CidrIp: 0.0.0.0/0
+        - IpProtocol: -1
+          CidrIp: 10.1.0.0/16
       Tags:
         - Key: Name
           Value: VPC1VPNGateway
@@ -347,15 +349,25 @@ Resources:
             - |
               echo "net.ipv4.conf.eth0.accept_redirects = 0" >> /etc/sysctl.conf
             - |
+              echo "net.ipv4.conf.all.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.lo.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.ip_vti0.rp_filter = 0" >> /etc/sysctl.conf
+            - |
               sysctl -p
             - |
-              echo "iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1387" >> /etc/rc.d/rc.local
+              echo "iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360" >> /etc/rc.d/rc.local
             - |
-              iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1387
+              iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
             - |
               chmod +x /etc/rc.d/rc.local
             - |
-              yum install htop openswan -y
+              yum install htop iptraf openswan -y
             - |
               wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn1.conf
             - |
