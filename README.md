@@ -8,8 +8,8 @@
 
 使用方法如下：
 
-- 从本代码仓库的CloudFormation目录下,获取2个CloudFormation template文件；
-- 分别在第一个Region和第二个Reion运行两个模版；
+- 从本代码仓库的CloudFormation目录下，获取2个CloudFormation template文件；
+- 分别在第一个Region和第二个Region运行两个模版；
 - 查看CloudFormation输出。
 
 # 二、使用CloudFormation模版创建环境
