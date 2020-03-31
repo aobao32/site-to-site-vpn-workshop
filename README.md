@@ -1,6 +1,6 @@
 # Site-to-Site VPN Workshop - CloudFormation 模版
 
-![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/Site-to-Site-vpn.png)
+![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/Site-to-Site-vpn.png)
 
 本文是基于AWS中国区域使用EC2搭建Site-to-Site VPN的workshop环境。对应的Cloudformation可用于实验学习，也可以用于生产。
 
@@ -12,7 +12,7 @@
 - 分别在第一个Region和第二个Reion运行两个模版；
 - 查看CloudFormation输出；
 
-# 二、说明
+# 二、使用CloudFormation模版创建环境
 
 ### 1、支持区域
 
@@ -59,30 +59,124 @@
 
 启动模版完成后，分别验证如下：
 
-- 登录到Windows跳板机
-- 从Windows跳板机使用Private IP登录VPN网关
-- 从Windows跳板机使用Private IP登录位于Private Subnet内部子网的Application Server
-- 从Windows跳板机使用浏览器，访问 http://应用服务器内网IP/ ，验证内网应用服务器工作正常 
+- 登录到Windows跳板机；
+- 从Windows跳板机使用Private IP登录VPN网关；
+- 从Windows跳板机使用Private IP登录位于Private Subnet内部子网的Application Server；
+- 从Windows跳板机使用浏览器，访问 http://应用服务器内网IP/ ，验证内网应用服务器工作正常；
 
 验证成功后，继续下一步。
 
-### 6、后续实验过程
+## 三、配置IPSEC VPN
 
-（1）模版创建完毕后，VPN Gateway只能通过Windows跳板机登录，不允许从公网使用SSH登录。
+### 1、创建IPSEC VPN连接
 
-（2）对VPNGateway服务器完成openswan的配置，替换配置文件中的IP地址为实验中使用的真实EIP。
+模版创建完毕后，VPN Gateway只能通过Windows跳板机登录，不允许从公网使用SSH登录。查看CloudFormation里边的Output，找到Windows跳板机IP登录到远程桌面，再从Output中找到VPN Gateway内网IP，用SSH登录。
 
-（3）启动VPN服务，确认连接建立
+登录到VPC1的VPN Gateway上，编辑配置文件 /etc/ipsec.d/cisco.conf，将其中的LOCALEIP和REMOTEEIP分别换成本VPC的VPC Gateway的EIP，和远端的EIP。
 
-（4）从两个VPN网关互相ping
+```
+conn cisco
+    authby=secret
+    auto=start
+    leftid=LOCALEIP
+    left=%defaultroute
+    leftsubnet=10.1.0.0/16
+    leftnexthop=%defaultroute
+    right=REMOTEEIP
+    rightsubnet=192.16.0.0/16
+    keyingtries=%forever
+    ike=aes128-sha1;modp1024
+    ikelifetime=86400s
+    phase2alg=aes128-sha1
+    salifetime=3600s
+    pfs=no
+```
 
-（5）从Windows跳板机登录到位于内网的Application服务器，然后ping另一侧的
-Applicatin服务。如果ping通则表示内网通过VPN网关转发成功。
+编辑配置文件 /etc/ipsec.d/cisco.conf，将其中的LOCALIP和REMOTEIP分别换成本VPC的VPC Gateway的EIP，和远端的EIP。注意格式，在远端EIP地址后以冒号结尾，然后是空格，才是认证方式PSK。请保持符号和空格。
+
+```
+LOCALEIP REMOTEEIP: PSK "aws123@@@888"
+```
+
+保存退出。完成对VPC1的修改。
+
+接下来对VPC2做相同的配置。请注意，VPC2的配置文件中，本地网关EIP需要替换为VPC2的EIP，而配置文件中的远程EIP就是VPC1的EIP。
+
+### 2、启动VPN服务
+
+执行如下命令启动IPSEC VPN。
+
+```
+service ipsec start
+```
+
+执行如下命令，查看配置是否正确。
+
+```
+ipsec verify
+```
+
+返回结果如下截图，则表示配置正确。
+
+![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/ipsec-verify.png)
+
+### 3、从VPN网关发起对远端的VPN网关的Ping测试
+
+登录到本VPC的VPN网关，ping远端VPN节点的内网IP，ping成功则表示IPSEC VPN建立正常。
+
+至此两个路由器之间已经打通。
+
+## 四、打通路由器背后的子网
+
+### 1、为本VPC添加去往远端VPC的路由条目
+
+VPC1的配置步骤如下：
+
+- 进入AWS控制台的VPC模块；
+- 从左侧菜单找到路由表，找到VPC1Public和VPC1Private两张路由表，分别做如下修改；
+- 点击页面下半部分，第二个标签页Route Table路由表，点击Edit Route编辑路由按钮；
+- 现有路由条目不要修改，点击Add Route添加路由按钮增加一行新的路由
+- Destation目标填写为192.168.0.0/16，Targe目标从下拉框中选择Instance，然后从Instance带出来的EC2清单中选择VPC1VPNGateway；
+- 点击保存路由按钮；
+
+VPC2的配置步骤如下：
+
+- 进入AWS控制台的VPC模块；
+- 从左侧菜单找到路由表，找到VPC2Public和VPC2Private两张路由表，分别做如下修改；
+- 点击页面下半部分，第二个标签页Route Table路由表，点击Edit Route编辑路由按钮；
+- 现有路由条目不要修改，点击Add Route添加路由按钮增加一行新的路由
+- Destation目标填写为192.168.0.0/16，Targe目标从下拉框中选择Instance，然后从Instance带出来的EC2清单中选择VPC1VPNGateway；
+- 点击保存路由按钮；
+路由表配置完成。
+
+### 2、使用浏览器访问远端内网应用
+
+上述路由表配置完成后，执行如下操作：
+
+- 在VPC1的Windows跳板机，打开浏览器，访问VPC2的内网的应用服务器80端口;
+- 在VPC2的Windows跳板机，打开浏览器，访问VPC1的内网的应用服务器80端口;
+
+交叉访问正常，表示路由配置完全正确。
+
+### 3、在Private Subnet测试内网互相访问
+
+从Windows跳板机上，登录位于Private Subnet的Application Server。登录成功后，ping远端另一侧位于内网的Application Server 内网IP。
+
+如果ping成功得到响应，则表示配置完成。
+
+## 五、使用Smokeping监控流量
+
+### 1、修改Smokeping配置文件
+
+### 2、查看监控数据
 
 至此实验结束。
 
 ***
 
 # 反馈
+
+参考文档（有大量配置参数修正）
+https://amazonaws-china.com/cn/blogs/china/openswan-vpn-solutions/
 
 请联系 pcman.biti-at-gmail.com
