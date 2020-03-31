@@ -115,7 +115,7 @@ ipsec verify
 
 返回结果如下截图，则表示配置正确。注意需要所有项目都显示OK，如果有黄色或者红色提示项，需要修改配置参数解决之。
 
-![Site-to-Site VPN](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/ipsec-verify.png)
+![IPSEC Verify](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/ipsec-verify.png)
 
 ### 3、从VPN网关发起对远端的VPN网关的Ping测试
 
@@ -206,7 +206,9 @@ service smokeping restart
 http://10.1.101.98/somkeping/
 ```
 
-点击左侧菜单栏的Charts之下的VPC链接，点击后可以展开子菜单，可以看到其中的子菜单的名字就是上一个步骤中修改配置文件时候定义的名字。
+点击左侧菜单栏的Charts之下的VPC链接，点击后可以展开子菜单，可以看到其中的子菜单的名字就是上一个步骤中修改配置文件时候定义的名字。Smokeping效果图如图。
+
+![smokeping](https://raw.githubusercontent.com/aobao32/site-to-site-vpn-workshop/master/images/smokeping.png)
 
 ### 3、实验结束/环境删除
 
