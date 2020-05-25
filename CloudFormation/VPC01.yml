@@ -435,7 +435,7 @@ Resources:
             - |
               systemctl restart httpd
             - |
-              yum install rrdtool wqy* fping curl bind-utils httpd httpd-devel perl perl-FCGI perl-CGI perl-CGI-SpeedyCGI perl-libwww-perl perl-Socket6 perl-Net-Telnet perl-Net-OpenSSH perl-Net-DNS perl-LDAP perl-IO-Socket-SSL perl-ExtUtils-MakeMaker rrdtool-perl perl-Sys-Sysloghttpd httpd-devel mod_fcgid rrdtool perl-CGI-SpeedyCGI fping rrdtool-perl perl-Sys-Syslog perl-CPAN perl-local-lib perl-Time-HiRes
+              yum install rrdtool wqy* fping curl bind-utils httpd httpd-devel perl perl-FCGI perl-CGI perl-CGI-SpeedyCGI perl-libwww-perl perl-Socket6 perl-Net-Telnet perl-Net-OpenSSH perl-Net-DNS perl-LDAP perl-IO-Socket-SSL perl-ExtUtils-MakeMaker rrdtool-perl perl-Sys-Sysloghttpd httpd-devel mod_fcgid rrdtool perl-CGI-SpeedyCGI fping rrdtool-perl perl-Sys-Syslog perl-CPAN perl-local-lib perl-Time-HiRes -y
             - |
               yum update -y
             - |
