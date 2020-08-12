@@ -32,9 +32,9 @@ Mappings:
       Arch: HVM64
   AWSRegionArch2AMIWindows:
     cn-northwest-1:
-      HVM64: ami-0d15c93533af12219
+      HVM64: ami-0934e7d625575bb7c
     cn-north-1:
-      HVM64: ami-046fcc352cbeafbbc
+      HVM64: ami-071e0769a839a3f0d
     ap-southeast-1:
       HVM64: ami-0fdb514b22fa2aed1
     ap-northeast-1:
