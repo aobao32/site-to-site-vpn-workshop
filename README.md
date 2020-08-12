@@ -89,7 +89,7 @@ conn cisco
     pfs=no
 ```
 
-编辑配置文件 /etc/ipsec.d/cisco.conf，将其中的LOCALIP和REMOTEIP分别换成本VPC的VPC Gateway的EIP，和远端的EIP。注意格式，在远端EIP地址后以冒号结尾，然后是空格，才是认证方式PSK。请保持符号和空格。
+编辑配置文件 /etc/ipsec.d/cisco.secret，将其中的LOCALIP和REMOTEIP分别换成本VPC的VPC Gateway的EIP，和远端的EIP。注意格式，在远端EIP地址后以冒号结尾，然后是空格，才是认证方式PSK。请保持符号和空格。
 
 ```
 LOCALEIP REMOTEEIP: PSK "aws123@@@888"
