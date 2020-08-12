@@ -371,7 +371,7 @@ Resources:
             - |
               chmod +x /etc/rc.d/rc.local
             - |
-              yum install htop iptraf openswan -y
+              yum install htop iptraf-ng openswan -y
             - |
               wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn1.conf
             - |
