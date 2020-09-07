@@ -454,6 +454,10 @@ Resources:
               systemctl restart smokeping
             - |
               systemctl restart httpd
+            - |
+              systemctl enable httpd
+            - |
+              systemctl enable smokeping
             - |+
 
   VPC1EIP2assignment:
