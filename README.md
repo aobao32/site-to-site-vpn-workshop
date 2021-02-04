@@ -221,4 +221,4 @@ http://10.1.101.98/somkeping/
 参考文档（有大量配置参数修正）
 https://amazonaws-china.com/cn/blogs/china/openswan-vpn-solutions/
 
-作者 pcman.biti-at-gmail.com
+(以上官网博客链接已经失效）
