@@ -1,0 +1,516 @@
+Description:  Site-to-site-VPN-Demo-VPC2
+Parameters:
+  EC2KEY:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  JumpServerInstanceType:
+    Description: Choose Jump Server Instance Type
+    Type: String
+    Default: t3a.medium
+    AllowedValues:
+      - t3a.medium
+      - t3a.large
+      - t3a.xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  VPNGatewayInstanceType:
+    Description: Choose VPN Gateway Instance Type
+    Type: String
+    Default: t4g.micro
+    AllowedValues:
+      - t4g.micro
+      - t4g.small
+      - c4g.medium
+      - c6g.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  AppServerInstanceType:
+    Description: Choose VPN Gateway Instance Type
+    Type: String
+    Default: t3a.medium
+    AllowedValues:
+      - t3a.medium
+      - t3a.large
+      - t3a.xlarge
+  Arm64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2'
+  X64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  Win64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+
+Resources:
+  #IAM Profile for Session Manager(SSM)
+  SSMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws-cn:iam::aws:policy/AmazonSSMManagedInstanceCore'
+      Path: /
+      RoleName: S2SVPNGateway-SSM-VPC2
+      Tags:
+        - Key: Name
+          Value: S2SVPNGateway-SSM-VPC2
+  SSMIAMprofile:
+    Type: "AWS::IAM::InstanceProfile"
+    DependsOn: SSMRole
+    Properties:
+      Path: "/"
+      Roles:
+        -
+          Ref: "SSMRole"
+
+  VPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC2
+  VPC2InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: VPC2
+  VPC2InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref VPC2InternetGateway
+      VpcId: !Ref VPC2
+  VPC2EIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: VPC2NAT
+  VPC2EIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: VPC2VPNGateway
+  VPC2EIP3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: VPC2JumpServer
+  VPC2Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 192.168.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: VPC2Public1
+  VPC2Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 192.168.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: VPC2Public2
+  VPC2Subnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 192.168.101.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: VPC2Private1
+  VPC2Subnet4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: 192.168.102.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: VPC2Private2
+  VPC2RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC2
+      Tags:
+        - Key: Name
+          Value: VPC2Public
+  VPC2DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPC2InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref VPC2InternetGateway
+  VPC2Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable1
+      SubnetId: !Ref VPC2Subnet1
+  VPC2Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable1
+      SubnetId: !Ref VPC2Subnet2
+  NATGateway2:
+    DependsOn: VPC2Subnet1RouteTableAssociation
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt VPC2EIP1.AllocationId
+      SubnetId: !Ref VPC2Subnet1
+      Tags:
+        - Key: Name
+          Value: VPC2NATforPrivate
+  VPC2RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC2
+      Tags:
+        - Key: Name
+          Value: VPC2Private
+  VPC2Subnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable2
+      SubnetId: !Ref VPC2Subnet3
+  VPC2Subnet4RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable2
+      SubnetId: !Ref VPC2Subnet4
+  VPC2PrivatetoPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPC2Subnet3RouteTableAssociation
+    Properties:
+      RouteTableId: !Ref VPC2RouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway2
+  VPC2SecurtiyGroup1:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC2Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: VPC2JumpServer
+      VpcId: !Ref VPC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3389'
+          ToPort: '3389'
+          CidrIp: 52.82.200.0/24
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: VPC2JumpServer
+  VPC2SecurtiyGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC2Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: VPC2VPNGateway
+      VpcId: !Ref VPC2
+      SecurityGroupIngress:
+        - IpProtocol: udp
+          FromPort: '500'
+          ToPort: '500'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: '4500'
+          ToPort: '4500'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 192.168.0.0/16
+        - IpProtocol: 50
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: -1
+          CidrIp: 192.168.0.0/16
+      Tags:
+        - Key: Name
+          Value: VPC2VPNGateway
+  VPC2SecurtiyGroup3:
+    Type: 'AWS::EC2::SecurityGroup'
+    DependsOn: VPC2Subnet2RouteTableAssociation
+    Properties:
+      GroupDescription: VPC2AppServer
+      VpcId: !Ref VPC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 192.168.0.0/16
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: '8'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: VPC2AppServer
+
+  VPC2VM1:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC2SecurtiyGroup1
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !Ref X64AmiId
+      InstanceType: !Ref JumpServerInstanceType
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: VPC2JumpServer
+      SubnetId: !Ref VPC2Subnet1
+      SourceDestCheck: true
+      SecurityGroupIds:
+        - !Ref VPC2SecurtiyGroup1
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              <powershell>
+            - |
+              Import-Module NetSecurity
+            - |
+              Set-NetFirewallRule -DisplayName "File and Printer Sharing (Echo Request - ICMPv4-In)" -enabled True
+            - |
+              </powershell>
+            - |
+              <persist>true</persist>
+            - |+ 
+
+  VPC2VM2:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC2SecurtiyGroup2
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !Ref Arm64AmiId
+      InstanceType: !Ref VPNGatewayInstanceType
+      IamInstanceProfile: !Ref SSMIAMprofile
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: VPC2VPNGateway
+      SubnetId: !Ref VPC2Subnet1
+      SourceDestCheck: false
+      SecurityGroupIds:
+        - !Ref VPC2SecurtiyGroup2
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #! /bin/bash
+            - |
+              echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.all.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.send_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.accept_redirects = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.all.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.default.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.eth0.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.lo.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              echo "net.ipv4.conf.ip_vti0.rp_filter = 0" >> /etc/sysctl.conf
+            - |
+              sysctl -p
+            - |
+              echo "iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360" >> /etc/rc.d/rc.local
+            - |
+              iptables -t mangle -A FORWARD -o eth0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1360
+            - |
+              chmod +x /etc/rc.d/rc.local
+            - |
+              yum install htop iptraf-ng openswan -y
+            - |
+              wget -O /etc/ipsec.d/cisco.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/conn2.conf
+            - |
+              wget -O /etc/ipsec.d/cisco.secrets https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/sec1.conf
+            - |
+              echo "alias vi=vim" >> /etc/bashrc
+            - |
+              yum update -y
+            - |+
+
+  VPC2VM3:
+    Type: 'AWS::EC2::Instance'
+    DependsOn: VPC2SecurtiyGroup2
+    Properties:
+      KeyName: !Ref EC2KEY
+      ImageId: !Ref X64AmiId
+      InstanceType: !Ref AppServerInstanceType
+      IamInstanceProfile: !Ref SSMIAMprofile
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      Tags:
+        - Key: Name
+          Value: VPC2AppServer
+      SubnetId: !Ref VPC2Subnet3
+      SourceDestCheck: true
+      SecurityGroupIds:
+        - !Ref VPC2SecurtiyGroup3
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #! /bin/bash
+            - |
+              amazon-linux-extras install -y php7.3
+            - | 
+              yum install httpd git -y
+            - |  
+              git clone https://github.com/awslabs/ecs-demo-php-simple-app
+            - |
+              mv /ecs-demo-php-simple-app/src/* /var/www/html
+            - |
+              rm -rf /ecs-demo-php-simple-app
+            - |
+              usermod -a -G apache ec2-user
+            - |
+              chown -R ec2-user:apache /var/www
+            - |
+              chmod 2775 /var/www
+            - |
+              find /var/www -type d -exec chmod 2775 {} \;
+            - |
+              find /var/www -type f -exec chmod 0664 {} \;
+            - |
+              echo "alias vi=vim" >> /etc/bashrc
+            - |
+              systemctl restart php-fpm
+            - |
+              systemctl restart httpd
+            - |
+              yum install rrdtool wqy* fping curl bind-utils httpd httpd-devel perl perl-FCGI perl-CGI perl-CGI-SpeedyCGI perl-libwww-perl perl-Socket6 perl-Net-Telnet perl-Net-OpenSSH perl-Net-DNS perl-LDAP perl-IO-Socket-SSL perl-ExtUtils-MakeMaker rrdtool-perl perl-Sys-Sysloghttpd httpd-devel mod_fcgid rrdtool perl-CGI-SpeedyCGI fping rrdtool-perl perl-Sys-Syslog perl-CPAN perl-local-lib perl-Time-HiRes -y
+            - |
+              yum update -y
+            - |
+              amazon-linux-extras install epel -y
+            - |
+              yum install smokeping -y
+            - |
+              rm -f /etc/httpd/conf.d/smokeping.conf
+            - |
+              wget -O /etc/httpd/conf.d/smokeping.conf https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/apache-smokeping.conf
+            - |
+              rm -f /etc/smokeping/config
+            - |
+              wget -O /etc/smokeping/config https://s3.cn-north-1.amazonaws.com.cn/myworkshop-lxy/site-to-site-vpn/smokping-config.conf
+            - |
+              systemctl restart smokeping
+            - |
+              systemctl restart httpd
+            - |
+              systemctl enable smokeping
+            - |
+              systemctl enable httpd
+            - |+
+
+  VPC2EIP2assignment:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: VPC2VM1
+    Properties:
+      InstanceId: !Ref VPC2VM1
+      EIP: !Ref VPC2EIP2
+  VPC2EIP3assignment:
+    Type: AWS::EC2::EIPAssociation
+    DependsOn: VPC2VM2
+    Properties:
+      InstanceId: !Ref VPC2VM2
+      EIP: !Ref VPC2EIP3
+
+Outputs:
+    VPC:
+      Description: VPCID
+      Value: VPC2
+    JumpServer:
+      Description: Use Windows RDP to login
+      Value: !Ref VPC2EIP2
+    VPNGatewayEIP:
+      Description: VPN Gateway EIP for VPN Configuration
+      Value: !Ref VPC2EIP3
+    VPNGatewayPrivateIPLogin:
+      Description: VPN Gateway is only allowed to login from Windows Jump Server
+      Value: !Join 
+        - ''
+        - - "ssh -i "
+          - !Ref EC2KEY
+          - ".pem ec2-user@"
+          - !GetAtt 
+            - VPC2VM2
+            - PrivateIp
+    PublicSubnet1:
+      Description: DMZ in AZ1 for JumpServer/VPNGateway/Firewall and others
+      Value: 192.168.1.0/24
+    PublicSubnet2:
+      Description: DMZ in AZ2 for JumpServer/VPNGateway/Firewall and others
+      Value: 192.168.2.0/24
+    PrivateSubnet1:
+      Description: Green Zone in AZ1 for applications
+      Value: 192.168.101.0/24
+    Privatesubnet2:
+      Description: Green Zone in AZ2 for applications
+      Value: 192.168.102.0/24
+    VPC2ApplicationServer:
+      Description: Application Server in VPC2 private subnet
+      Value: !Join 
+        - ''
+        - - "http://"
+          - !GetAtt 
+            - VPC2VM3
+            - PrivateIp
+          - "/"
+    VPC2ApplicationServerLogin:
+      Description: Application Server in VPC2 private subnet
+      Value: !Join 
+        - ''
+        - - "ssh -i "
+          - !Ref EC2KEY
+          - ".pem ec2-user@"
+          - !GetAtt 
+            - VPC2VM3
+            - PrivateIp
