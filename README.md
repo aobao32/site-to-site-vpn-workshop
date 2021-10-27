@@ -4,6 +4,8 @@
 
 本文是基于AWS中国区域使用EC2搭建Site-to-Site VPN的workshop环境。对应的Cloudformation可用于实验学习，也可以用于生产。
 
+注意：不可进行跨国VPC搭建。跨境需要专门具有资质的跨境线路服务商。
+
 # 一、使用方法
 
 使用方法如下：
@@ -16,11 +18,19 @@
 
 ### 1、支持区域
 
-本实验的Cloudformation支持AWS中国的北京和宁夏区域。AWS海外区域已经具备托管VPN服务，因此不需要用EC2搭建。本CloudFormation没有对海外区域的AMI适配，因此在海外不适用。
+AWS海外区域已经具备托管VPN服务，但也可以使用本模版搭建EC2作为路由器实现VPN服务。
+
+请从CloudFormation目录中，选择对应的模版，VPC01.yml和VPC02.yml是针对AWS Global区域的模版。VPC01-CN.yml和VPC02-CN.yml是针对AWS中国区的模版。请注意选择对应的文件，否则会提示IAM错误。
+
+另外，模版使用System Manager Parameters自动获取最新AMI，因此不再需要手工更新CloudFormation模版内的AMI ID，即可在任意一个区域启动。
+
+注意：不可进行跨国VPC搭建。跨境需要专门具有资质的跨境线路服务商。
 
 ### 2、使用场景
 
-如果是完整实验，两端都在AWS上模拟，则可以分别在北京和宁夏各自运行一个模版。如果是用于生产环境，另一侧对接私有数据中心的物理防火墙设备，则只需要vpc1模版即可。
+如果是完整实验，两端都在AWS上模拟，则可以分别在AWS两个不同区域各自运行一个模版。如果是用于生产环境，另一侧对接私有数据中心的物理防火墙设备，则只需要VPC1模版即可。
+
+注意：不可进行跨国VPC搭建。跨境需要专门具有资质的跨境线路服务商。
 
 ### 3、模版需要输入参数
 
@@ -29,7 +39,9 @@
 然后进入Cloudformation中加载模版。输入模版名称，可以选择参数包括：
 
 - 跳板机规格（保持默认即可）；
-- VPN Gateway 网关所用EC2的规格；如果用于生产，可选c5.large，测试的话可选t2.small规格。
+- VPN网关规格；
+- 应用服务器规格；
+- 以上三个节点对应的AMI最新镜像ID（通过System Manager获取，此参数无需调整）
 
 然后一路继续即可。
 
@@ -162,9 +174,9 @@ VPC2的配置步骤如下：
 
 如果ping成功得到响应，则表示配置完成。
 
-# 五、使用Smokeping监控流量
+# 五、使用Smokeping监控流量（可选）
 
-为了监控网络延迟，在本实验环境中位于Private Subnet的Application Server上，部署了Smokeping网络测试工具。接下来我们将修改其配置，实现对远端的ping延迟监控。
+为了监控网络延迟，在本实验环境中位于Private Subnet的Application Server上，自动部署了Smokeping网络测试工具。接下来我们将修改其配置，实现对远端的ping延迟监控。
 
 ### 1、修改Smokeping配置文件
 
