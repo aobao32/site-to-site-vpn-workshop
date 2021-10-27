@@ -1,4 +1,4 @@
-Description:  This template for VPC1
+Description:  Site-to-site-VPN-Demo-VPC1
 Parameters:
   EC2KEY:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
@@ -9,38 +9,71 @@ Parameters:
     Type: String
     Default: t3a.medium
     AllowedValues:
-      - t2.small
       - t3a.medium
-      - c5.large
+      - t3a.large
+      - t3a.xlarge
     ConstraintDescription: must be a valid EC2 instance type.
   VPNGatewayInstanceType:
     Description: Choose VPN Gateway Instance Type
     Type: String
-    Default: c5.large
+    Default: t4g.micro
     AllowedValues:
-      - t2.small
-      - t3a.medium
-      - c5.large
+      - t4g.micro
+      - t4g.small
+      - c4g.medium
+      - c6g.medium
     ConstraintDescription: must be a valid EC2 instance type.
-Mappings:
-  AWSInstanceType2Arch:
-    t2.small:
-      Arch: HVM64
-    t3a.medium:
-      Arch: HVM64
-    c5.large:
-      Arch: HVM64
-  AWSRegionArch2AMIWindows:
-    cn-northwest-1:
-      HVM64: ami-0e420ce295221431e
-    cn-north-1:
-      HVM64: ami-0b1e8235c137f22c5
-  AWSRegionArch2AMILinux:
-    cn-northwest-1:
-      HVM64: ami-0fbceead693066e25
-    cn-north-1:
-      HVM64: ami-0c1c539eca996ffba
+  AppServerInstanceType:
+    Description: Choose VPN Gateway Instance Type
+    Type: String
+    Default: t3a.medium
+    AllowedValues:
+      - t3a.medium
+      - t3a.large
+      - t3a.xlarge
+    ConstraintDescription: must be a valid EC2 instance type.
+  Arm64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2'
+  X64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  Win64AmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Description: This SSM parameter will have latest AMI image, just keep default and DO NOT modify it.
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+
 Resources:
+  #IAM Profile for Session Manager(SSM)
+  SSMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+      Path: /
+      RoleName: S2SVPNGateway-SSM-VPC1
+      Tags:
+        - Key: Name
+          Value: S2SVPNGateway-SSM-VPC1
+  SSMIAMprofile:
+    Type: "AWS::IAM::InstanceProfile"
+    DependsOn: SSMRole
+    Properties:
+      Path: "/"
+      Roles:
+        -
+          Ref: "SSMRole"
+
   VPC1:
     Type: AWS::EC2::VPC
     Properties:
@@ -255,14 +288,9 @@ Resources:
     DependsOn: VPC1SecurtiyGroup1
     Properties:
       KeyName: !Ref EC2KEY
-      ImageId: !FindInMap 
-        - AWSRegionArch2AMIWindows
-        - !Ref 'AWS::Region'
-        - !FindInMap 
-          - AWSInstanceType2Arch
-          - !Ref JumpServerInstanceType
-          - Arch
+      ImageId: !Ref Win64AmiId
       InstanceType: !Ref JumpServerInstanceType
+      IamInstanceProfile: !Ref SSMIAMprofile
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
@@ -291,14 +319,9 @@ Resources:
     DependsOn: VPC1SecurtiyGroup2
     Properties:
       KeyName: !Ref EC2KEY
-      ImageId: !FindInMap 
-        - AWSRegionArch2AMILinux
-        - !Ref 'AWS::Region'
-        - !FindInMap 
-          - AWSInstanceType2Arch
-          - !Ref VPNGatewayInstanceType
-          - Arch
+      ImageId: !Ref Arm64AmiId
       InstanceType: !Ref VPNGatewayInstanceType
+      IamInstanceProfile: !Ref SSMIAMprofile
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
@@ -361,14 +384,9 @@ Resources:
     DependsOn: VPC1SecurtiyGroup2
     Properties:
       KeyName: !Ref EC2KEY
-      ImageId: !FindInMap 
-        - AWSRegionArch2AMILinux
-        - !Ref 'AWS::Region'
-        - !FindInMap 
-          - AWSInstanceType2Arch
-          - t2.small
-          - Arch
-      InstanceType: t2.small
+      ImageId: !Ref X64AmiId
+      InstanceType: !Ref AppServerInstanceType
+      IamInstanceProfile: !Ref SSMIAMprofile
       AvailabilityZone: !Select [ 0, !GetAZs  '' ]
       Tags:
         - Key: Name
