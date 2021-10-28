@@ -107,14 +107,14 @@ Resources:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: VPC1VPNGateway
+          Value: VPC1JumpServer
   VPC1EIP3:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: VPC1JumpServer
+          Value: VPC1VPNGateway
   VPC1Subnet1:
     Type: AWS::EC2::Subnet
     Properties:
