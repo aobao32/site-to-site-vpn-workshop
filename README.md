@@ -22,6 +22,20 @@ AWS海外区域已经具备托管VPN服务，但也可以使用本模版搭建EC
 
 请从CloudFormation目录中，选择对应的模版，VPC01.yml和VPC02.yml是针对AWS Global区域的模版。VPC01-CN.yml和VPC02-CN.yml是针对AWS中国区的模版。请注意选择对应的文件，否则会提示IAM错误。
 
+如果从中国访问Github遇到网络问题无法下载，请使用如下的链接下载模版：
+
+适合AWS中国区的CloudFormation模版：
+
+https://myworkshop-lxy.s3.cn-north-1.amazonaws.com.cn/site-to-site-vpn/VPC01-CN.yml
+
+https://myworkshop-lxy.s3.cn-north-1.amazonaws.com.cn/site-to-site-vpn/VPC02-CN.yml
+
+适合AWS Global区域的CloudFormation模版：
+
+https://myworkshop-lxy.s3.cn-north-1.amazonaws.com.cn/site-to-site-vpn/VPC01.yml
+
+https://myworkshop-lxy.s3.cn-north-1.amazonaws.com.cn/site-to-site-vpn/VPC02.yml
+
 另外，模版使用System Manager Parameters自动获取最新AMI，因此不再需要手工更新CloudFormation模版内的AMI ID，即可在任意一个区域启动。
 
 注意：不可进行跨国VPC搭建。跨境需要专门具有资质的跨境线路服务商。
