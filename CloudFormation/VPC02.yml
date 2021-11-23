@@ -16,7 +16,7 @@ Parameters:
   VPNGatewayInstanceType:
     Description: Choose VPN Gateway Instance Type
     Type: String
-    Default: t4g.micro
+    Default: t4g.small
     AllowedValues:
       - t4g.micro
       - t4g.small
